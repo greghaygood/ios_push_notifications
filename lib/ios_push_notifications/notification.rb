@@ -23,7 +23,12 @@ module IOSPN
         result['aps']['sound'] = self.sound if self.sound.is_a?(String) && self.sound
       end
       if self.custom_properties
-        self.custom_properties.each do |key,value|
+        hash = self.custom_properties
+        if hash.class == String
+          hash = YAML.load(self.custom_properties)
+        end
+        hash.each do |key,value|
+          $stderr.puts "custom property: '#{key}' = '#{value}'"
           result["#{key}"] = "#{value}"
         end
       end
@@ -36,8 +41,10 @@ module IOSPN
     
     def build_message_for_sending
           json = self.build_hash_for_json
+          #$stderr.puts "JSON message: #{json}"
     message = "\0\0 #{self.device.to_hex}\0#{json.length.chr}#{json}"
     if message.size.to_i > 256
+      $stderr.puts "JSON message is too large for APN! (Size: #{message.size.to_i})"
       return false
     else
       message
